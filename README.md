@@ -1,0 +1,3 @@
+# Odyssey
+
+An async logging system in development...
