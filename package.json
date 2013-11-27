@@ -4,6 +4,10 @@
   "author": "Bret Copeland <bret@atlantisflight.org>",
   "description": "An async logging system in development.",
   "main": "./lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bretcope/odyssey.git"
+  },
   "scripts": {
     "test": "mocha"
   },
