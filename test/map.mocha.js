@@ -12,7 +12,7 @@ suite('Map', function ()
 	{
 		async.map
 		(
-			[ 'one', 'two', 'three'],
+			{ 0: 'one', 1: 'two', 2: 'three'},
 			function(cb, item, index)
 			{
 				cb(null, 'Hey ' + index + ' ' + item);
