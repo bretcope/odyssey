@@ -260,4 +260,63 @@ suite('Waterfall', function ()
 			}
 		);
 	});
+	
+	test('Callbacks should not be called more than once', function (done)
+	{
+		var calls = 0;
+		async.waterfall
+		(
+			[
+				function (cb)
+				{
+					cb();
+					cb();
+				},
+				function (cb)
+				{
+					calls++;
+					process.nextTick(cb);
+				}
+			],
+			function (hlog)
+			{
+				assert(calls === 1, 'Callback should have only been called once');
+				done();
+			}
+		);
+	});
+	
+	test('Callbacks should called more than once when allowed', function (done)
+	{
+		var calls = 0;
+		async.waterfall
+		(
+			[
+				function (cb)
+				{
+					cb();
+					cb.reinvoke(); // sync
+					process.nextTick(cb);
+				},
+				function (cb)
+				{
+					console.log();
+					console.log('fsfeetfwefasdf');
+					cb.enableReinvoke();
+					calls++;
+					
+					if (calls === 3)
+						cb();
+				},
+				function (cb)
+				{
+				}
+			],
+			function (hlog)
+			{
+				assert(calls === 3, 'Callback should have been called 3 times.');
+				done();
+			}
+		);
+	});
 });
