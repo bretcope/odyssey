@@ -3,7 +3,7 @@
 var assert = require('assert');
 var odyssey = require('../');
 
-var async = odyssey.async;
+var athena = odyssey.athena;
 var httpLog = odyssey.httpLog;
 
 suite('Waterfall', function ()
@@ -11,7 +11,7 @@ suite('Waterfall', function ()
 	test('Should call each function in order', function (done)
 	{
 		var output = '';
-		async.waterfall
+		athena.waterfall
 		(
 			[
 				function (cb)
@@ -46,7 +46,7 @@ suite('Waterfall', function ()
 	test('Non-failure log should not break waterfall', function (done)
 	{
 		var output = '';
-		async.waterfall
+		athena.waterfall
 		(
 			[
 				function (cb)
@@ -83,7 +83,7 @@ suite('Waterfall', function ()
 	test('Failure log should break waterfall', function (done)
 	{
 		var output = '';
-		async.waterfall
+		athena.waterfall
 		(
 			[
 				function (cb)
@@ -119,7 +119,7 @@ suite('Waterfall', function ()
 	
 	test('Arguments waterfall', function (done)
 	{
-		async.waterfall
+		athena.waterfall
 		(
 			[
 				function (cb)
@@ -155,7 +155,7 @@ suite('Waterfall', function ()
 	
 	test('Synchronous invoking of callbacks', function (done)
 	{
-		async.waterfall
+		athena.waterfall
 		(
 			[
 				function (cb)
@@ -189,7 +189,7 @@ suite('Waterfall', function ()
 	test('Push logs inside waterfall function', function (done)
 	{
 		var output = '';
-		async.waterfall
+		athena.waterfall
 		(
 			[
 				function (cb)
@@ -228,7 +228,7 @@ suite('Waterfall', function ()
 	test('Arbitrary break point', function (done)
 	{
 		var output = '';
-		async.waterfall
+		athena.waterfall
 		(
 			[
 				function (cb)
@@ -264,7 +264,7 @@ suite('Waterfall', function ()
 	test('Callbacks should not be called more than once', function (done)
 	{
 		var calls = 0;
-		async.waterfall
+		athena.waterfall
 		(
 			[
 				function (cb)
@@ -289,7 +289,7 @@ suite('Waterfall', function ()
 	test('Callbacks should called more than once when allowed', function (done)
 	{
 		var calls = 0;
-		async.waterfall
+		athena.waterfall
 		(
 			[
 				function (cb)

@@ -3,14 +3,14 @@
 var assert = require('assert');
 var odyssey = require('../');
 
-var async = odyssey.async;
+var athena = odyssey.athena;
 var httpLog = odyssey.httpLog;
 
 suite('Parallel', function ()
 {
 	test('Basic Example', function (done)
 	{
-		async.parallel
+		athena.parallel
 		(
 			{
 				one: function (cb)

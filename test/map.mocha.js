@@ -3,14 +3,14 @@
 var assert = require('assert');
 var odyssey = require('../');
 
-var async = odyssey.async;
+var athena = odyssey.athena;
 var httpLog = odyssey.httpLog;
 
 suite('Map', function ()
 {
 	test('Sync Example', function (done)
 	{
-		async.map
+		athena.map
 		(
 			{ 0: 'one', 1: 'two', 2: 'three'},
 			function(cb, item, index)
@@ -29,7 +29,7 @@ suite('Map', function ()
 	
 	test('Async Example', function (done)
 	{
-		async.map
+		athena.map
 		(
 			[ 'one', 'two', 'three'],
 			function(cb, item, index)
