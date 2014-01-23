@@ -275,7 +275,7 @@ suite('Waterfall', function ()
 				function (cb)
 				{
 					calls++;
-					process.nextTick(cb);
+					setTimeout(cb, 20);
 				}
 			],
 			function (hlog)
@@ -294,27 +294,31 @@ suite('Waterfall', function ()
 			[
 				function (cb)
 				{
+					//sync reinvoke test
 					cb();
-					cb.reinvoke(); // sync
+					cb();
+					cb();
+				},
+				function (cb)
+				{
+					cb.enableReinvoke();
+					calls++;
+					
+					//async reinvoke test
 					process.nextTick(cb);
 				},
 				function (cb)
 				{
-					console.log();
-					console.log('fsfeetfwefasdf');
 					cb.enableReinvoke();
 					calls++;
-					
-					if (calls === 3)
+
+					if (calls === 6)
 						cb();
-				},
-				function (cb)
-				{
 				}
 			],
 			function (hlog)
 			{
-				assert(calls === 3, 'Callback should have been called 3 times.');
+				assert(calls === 6, 'Callback should have been called 6 times.');
 				done();
 			}
 		);
