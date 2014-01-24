@@ -12,7 +12,9 @@ Odyssey is an asynchronous logging system for node.js in development.
     * [HttpLog.none](#httplog-none)
     * [Chaining Logs](#httplog-chaining)
 3. [Athena (Async Control Flows)](#athena)
-4. [Why the name Odyssey?](#why-name)
+    * [Including](#athena-including)
+    * [Context](#athena-context)
+    * [Control Flows](#athena-controlflows)
 
 <a name="why-another"></a>
 ## Why another node.js logging system?
@@ -294,6 +296,7 @@ __this.log()__
 
 Calling `this.log( hlog )` is equivalent to `this.logChain = httpLog.chain(this.logChain, hlog);`. This allows you to easily add as many logs as you'd like to the control-flow's log chain.
 
+<a name="athena-controlflows"></a>
 ### Control Flows
 
 * [map](#athena-map)
@@ -303,24 +306,174 @@ Calling `this.log( hlog )` is equivalent to `this.logChain = httpLog.chain(this.
 <a name="athena-map"></a>
 #### Map
 
+Similar to [async.map](https://github.com/caolan/async#map).
+
 ```javascript
-athena.map( [hlog], items, iterator, resultsHandler );
+athena.map ( [hlog], items, iterator, resultsHandler );
 ```
 
 * `hlog` an optional HttpLog which will be used as the initial [context.logChain](#athena-context-logchain) value.
 * `items` an Array or Object representing the values to be iterated over.
 * `iterator` a function with the signature `(callback, item, index)`. The `callback` takes two parameters: an HttpLog, and the "transformed" version of `item`.
-* `resultsHandler` a function with the signature `(hlog, results)` where results is either an array or object depending on what type `items` was.
+* `resultsHandler` a function with the signature `(hlog, results)` where `hlog` is the log chain from all iterators, and `results` is either an array or object depending on what type `items` was.
 
 The `iterator` will be called once for every item in `items`. When all iterators have completed (invoked the callback) the `resultsHandler` will be invoked. Although the iterators may complete in a different order than the original `items` array, the `results` is guaranteed to be in the original order.
  
- There is not currently a map implementation which waits for each iterator to complete before invoking the next, such as [mapSeries](https://github.com/caolan/async#mapSeries). This may be implemented in the future.
+> There is not currently a map implementation which waits for each iterator to complete before invoking the next, such as [mapSeries](https://github.com/caolan/async#mapSeries). This may be implemented in the future.
 
 <a name="athena-parallel"></a>
 #### Parallel
 
+Parallel runs a set of tasks and calls a results-handler method when all tasks have completed. Similar to [async.parallel](https://github.com/caolan/async#parallel).
+
+```javascript
+athena.parallel ( [hlog], tasks, resultsHandler )
+```
+
+* `hlog` an optional HttpLog which will be used as the initial [context.logChain](#athena-context-logchain) value.
+* `tasks` an Array or Object where the values are functions with the signature `(callback)`. The `callback` takes two parameters: an HttpLog, and a "result" of any type.
+* `resultsHandler` a function with the signature `(hlog, results)` where `hlog` is the log chain from all tasks, and `results` is either an array or object depending on what type `tasks` was.
+
 <a name="athena-waterfall"></a>
 #### Waterfall
 
-<a name="why-name"></a>
-## Why the name Odyssey?
+Waterfall passes the results of each task to the next task. Similar to [async.waterfall](https://github.com/caolan/async#waterfall).
+
+```javascript
+athena.waterfall ( [hlog], tasks, errorHandler )
+```
+
+* `hlog` an optional HttpLog which will be used as the initial [context.logChain](#athena-context-logchain) value.
+* `tasks` an array of functions (described in better detail below).
+* `errorHandler` the function which serves as both a final task and an error handler (described below).
+
+__Tasks__
+
+Each task function will receive a `callback` argument as the _first_ argument. The callback accepts any number of arguments, but the first argument will be interpreted as an HttpLog. This log becomes the root of [context.logChain](#athena-context-logchain). If the log's [failed](#httplog-properties-failed) property evaluates to true, then the `errorHandler` is called, and no further tasks are invoked. Otherwise, the next task is invoked, or if there are no more tasks, the errorHandler is invoked.
+
+If a task calls its `callback` with more than one argument, then the next task will receive these extra arguments as additional parameters.
+
+__Error Handler__
+
+The `errorHandler` function is identical to a task function except that its first argument is an HttpLog instead of a callback. This log is the [context.logChain](#athena-context-logchain).
+
+__Example__
+
+```javascript
+
+athena.waterfall(
+  [
+    function (callback) {
+      callback(null, 1);
+    },
+    function (callback, a) {
+      // a === 1
+      callback(null, 2);
+    },
+    function (callback, a) {
+      // a === 2
+      callback(httpLog.none, a, 3);
+    },
+    function (callback, a, b) {
+      // a === 2 && b === 3
+      callback.(null, 1, a, b);
+    }
+  ],
+  function (hlog, a, b, c) {
+    // a === 1 && b === 2 && c === 3
+    // hlog === httpLog.none
+  }
+);
+```
+
+For more examples, look in the [waterfall tests file](https://github.com/bretcope/odyssey/blob/master/test/waterfall.mocha.js).
+
+__Breaking the waterfall without passing a failed log__
+
+Sometimes it may be desirable to skip the remaining tasks and go straight to the `errorHandler`, but without having to actually throw an error. For this purpose, you may call `callback.break( [hlog] )`.
+
+```javascript
+athena.waterfall(
+  [
+    function (callback) {
+      callback(null, true);
+    },
+    function (callback, shouldBreak) {
+      if (shouldBreak) {
+        callback.break(httpLog.none);
+        return; // don't forget, you'll probably want to call return after calling break()
+      }
+      
+      //some other logic
+      callback();
+    },
+    function (callback) {
+      // this never gets called
+      callback();
+    }
+  ],
+  function (hlog) {
+  }
+);
+```
+
+__Invoking a task multiple times__
+
+Normally each task is invoked only once. Because accidentally invoking a task more than once could have unforeseen consequences, Athena prevents a this from happening by default. Only the first call to `callback()` will cause the next task to run.
+
+However, there are a limited number of circumstances where you may want a task to run more than once. In those cases, `callback.enableReinvoke()` is provided. This should be called in the task which is intended to be run multiple times (not the previous task). After `enableReinvoke` has been called, the task _may_ be invoked __EXACTLY ONE__ additional time. The next time the task is invoked, it can either choose to call `enableReinvoke` again to enable a third invocation, or it can choose to not, which means it cannot be called again.
+
+Example allowing infinite reinvocations:
+
+```javascript
+var count = 0;
+athena.waterfall(
+  [
+    function (callback) {
+      for (var i = 0; i < 6; i++)
+      	callback();
+    },
+    function (callback) {
+      // this task can run any number of times because it always calls enableReinvoke
+      callback.enableReinvoke();
+      
+      count++
+      if (count === 6)
+        callback();
+    }
+  ],
+  function (hlog) {
+    console.log(count); // 6
+  }
+);
+```
+
+Example allowing only a limited number of reinvocations:
+
+```javascript
+var count = 0;
+athena.waterfall(
+  [
+    function (callback) {
+      for (var i = 0; i < 6; i++)
+      	callback();
+    },
+    function (callback) {
+      // this task can only run 4 times, even though the previous task attempts to invoke it 6 times
+      
+      count++;
+      if (count < 4)
+        callback.enableReinvoke();
+      else
+        callback();
+    }
+  ],
+  function (hlog) {
+    console.log(count); // 6
+  }
+);
+```
+
+__Why is the callback the first argument?__
+
+_Shouldn't it be the last argument, which is standard in node.js?_ The problem with making it the last argument is that the index of the last argument changes depending on the number of arguments the previous task passed to its callback. Sometimes there are situations where a previous task may pass a variable number of arguments which can be difficult and tedious to account for. If you don't handle every argument signature correctly, you may introduce bugs where the program will crash because you tried to call the argument which you thought was the callback, only to find that named-argument happened to be a string this time. Moving the callback to the first position puts it in a consistent location regardless of the number of arguments passed by the previous task.
