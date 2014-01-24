@@ -260,7 +260,67 @@ var log5 = httpLog.chain(log2, log4); // [203->202->201->200->null]
 <a name="athena"></a>
 ## Athena (Async)
 
-//
+Athena is intended to provide similar utilities as [async](https://github.com/caolan/async). Because of Odyssey's unique design philosophy which says that the first argument to a callback should be an HttpLog, it is difficult to use existing async frameworks because they would see even `HttpLog.none` as a failure. Therefore, several async control flows have been included as part of Odyssey, and more will likely be added in the future.
+
+Another notable difference between Athena and other async frameworks is that it always sends the callback argument as the ___first___ argument instead of last. The reason for this is described in the [waterfall](#athena-waterfall) control flow. 
+
+<a name="athena-including"></a>
+### Including
+
+```javascript
+var athena = require('odyssey').athena;
+```
+
+Or, if you wish, you may use the `async` alias.
+
+```javascript
+var async = require('odyssey').async;
+```
+
+The primary reason why the async module was given the name athena was simply to avoid confusion with the popular existing [async](https://github.com/caolan/async) library. If this possible confusion does not bother you, feel free to use either alias.
+
+<a name="athena-context"></a>
+### Context
+
+The `this` object inside all functions within Athena control flows is a context object with one method and one property.
+
+<a name="athena-context-logchain"></a>
+__this.logChain__
+
+This property represents the log chain associated with the control flow.
+
+<a name="athena-context-log"></a>
+__this.log()__
+
+Calling `this.log( hlog )` is equivalent to `this.logChain = httpLog.chain(this.logChain, hlog);`. This allows you to easily add as many logs as you'd like to the control-flow's log chain.
+
+### Control Flows
+
+* [map](#athena-map)
+* [parallel](#athena-parallel)
+* [waterfall](#athena-waterfall)
+
+<a name="athena-map"></a>
+#### Map
+
+```javascript
+athena.map( [hlog], items, iterator, resultsHandler );
+```
+
+* `hlog` an optional HttpLog which will be used as the initial [context.logChain](#athena-context-logchain) value.
+* `items` an Array or Object representing the values to be iterated over.
+* `iterator` a function with the signature `(callback, item, index)`. The `callback` takes two parameters: an HttpLog, and the "transformed" version of `item`.
+* `resultsHandler` a function with the signature `(hlog, results)` where results is either an array or object depending on what type `items` was.
+
+The `iterator` will be called once for every item in `items`. When all iterators have completed (invoked the callback) the `resultsHandler` will be invoked. Although the iterators may complete in a different order than the original `items` array, the `results` is guaranteed to be in the original order.
+ 
+ There is not currently a map implementation which waits for each iterator to complete before invoking the next, such as [mapSeries](https://github.com/caolan/async#mapSeries). This may be implemented in the future.
+
+<a name="athena-parallel"></a>
+#### Parallel
+
+<a name="athena-waterfall"></a>
+#### Waterfall
 
 <a name="why-name"></a>
 ## Why the name Odyssey?
