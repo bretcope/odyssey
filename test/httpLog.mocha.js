@@ -36,6 +36,14 @@ suite('HttpLog', function ()
 		assert(hlog === httpLog.none);
 	});
 	
+	test('Returned objects are instances of HttpLog and Error', function ()
+	{
+		assert(httpLog() instanceof httpLog);
+		assert(httpLog() instanceof Error);
+		assert(httpLog(400) instanceof httpLog);
+		assert(httpLog(400) instanceof Error);
+	});
+	
 	test('Error without status defaults to 500', function ()
 	{
 		var err = new Error('this is an error');
