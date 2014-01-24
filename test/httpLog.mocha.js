@@ -108,4 +108,63 @@ suite('HttpLog', function ()
 		assert(hlog.message === msg, 'Message does not match');
 		assert(hlog.data === data, 'Data does not match');
 	});
+	
+	test('Chaining preserves log history', function ()
+	{
+		var prev = httpLog.none;
+		for (var i = 400; i < 404; i++)
+		{
+			prev = httpLog.chain(prev, httpLog(i));
+		}
+
+		var next = httpLog.none;
+		for (i = 200; i < 204; i++)
+		{
+			next = httpLog.chain(next, httpLog(i));
+		}
+		
+		var hlog;
+		
+		//verify initial chains
+		hlog = prev;
+		for (i = 403; i > 399; i--)
+		{
+			assert(hlog.status === i);
+			hlog = hlog.previous;
+		}
+		assert(hlog === null);
+		
+		hlog = next;
+		for (i = 203; i > 199; i--)
+		{
+			assert(hlog.status === i);
+			hlog = hlog.previous;
+		}
+		assert(hlog === null);
+		
+		//combine the chains
+		hlog = httpLog.chain(prev, next);
+		
+		assert(hlog === next);
+		assert(hlog.status === 203);
+		assert(hlog.highestLevel === 403);
+		
+		//verify new order
+		hlog = hlog.previous;
+		assert(hlog.status === 202);
+		hlog = hlog.previous;
+		assert(hlog.status === 201);
+		hlog = hlog.previous;
+		assert(hlog.status === 200);
+		hlog = hlog.previous;
+		assert(hlog.status === 403);
+		hlog = hlog.previous;
+		assert(hlog.status === 402);
+		hlog = hlog.previous;
+		assert(hlog.status === 401);
+		hlog = hlog.previous;
+		assert(hlog.status === 400);
+		hlog = hlog.previous;
+		assert(hlog === null);
+	});
 });

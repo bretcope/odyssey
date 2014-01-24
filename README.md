@@ -225,32 +225,36 @@ HttpLog.none is a [frozen](https://developer.mozilla.org/en-US/docs/Web/JavaScri
 <a name="httplog-chaining"></a>
 ### Chaining Logs
 
-A log chain is a linked list where every log has a [previous](#httplog-properties-previous) property which points to another log.
+A log chain is a linked list where every log has a [previous](#httplog-properties-previous) property which points to another log. This allows several log objects to be combined without the use of an array, and allows properties like [failed](#httplog-properties-failed) and [highestLevel](#httplog-properties-highestlevel) to seamlessly operate over the entire chain.
 
-The most common reason for chaining logs is to create a more useful log while also preserving any original errors.
+<a name="httplog-chain"></a>
+##### HttpLog.chain
 
-Consider this example:
+Although a log's [previous](#httplog-properties-previous) property can be set directly, the safer method is to use `HttpLog.chain(prev, next)`. On a basic level, this method assigns `next.previous = prev` and returns `next`; however, it handles several edge cases correctly. Namely:
+
+1. It will never try to assign a log chain to `HttpLog.none`. If `next` is null or none, `chain()` will simply return `prev` instead.
+2. It will preserve any existing log chains on both `prev` and `next`. If `next` has an existing chain, then `prev` is simply appended to the end of that chain.
+
+__Example__
+
+The chain which is produced by each statement is described by the end of line comments.
 
 ```javascript
-function requestHandler (req, res) {
-  
-}
+var log1 = httpLog(200); // [200->null]
+var log2 = httpLog.chain(log1, httpLog(201)); // [201->200->null]
 
-function getUser (callback) {
-  
-}
+// log2 is [log2->log1->null]
 
-function getFromDb (key, callback) {
-  var callLog = httpLog.ok('db call', { key: key });
-  db.get(key, function (err, val) {
-    var hlog = httpLog(err);
-    if (!hlog.failed) {
-      hlog = httpLog.ok('db success');
-    }
-    hlog.previous = callLog;
-    callback(httpLog, val);
-  });
-}
+var log3 = httpLog.chain(httpLog(202), null); // [202->null] 
+var log4 = httpLog.chain(log3, httpLog(203)); // [203->202->null]
+
+// log4 is [log4->log3->null]
+
+// now let's combine two logs with existing chains
+var log5 = httpLog.chain(log2, log4); // [203->202->201->200->null]
+
+// log5 is [log4->log2->log1->log3]
+// also note that log5 === log4 (they point to the same object)
 ```
 
 <a name="athena"></a>
