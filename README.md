@@ -460,7 +460,6 @@ athena.waterfall(
     },
     function (callback) {
       // this task can only run 4 times, even though the previous task attempts to invoke it 6 times
-      
       count++;
       if (count < 4)
         callback.enableReinvoke();
@@ -469,7 +468,7 @@ athena.waterfall(
     }
   ],
   function (hlog) {
-    console.log(count); // 6
+    console.log(count); // 4
   }
 );
 ```
