@@ -37,4 +37,9 @@ suite('Parallel', function ()
 			}
 		);
 	});
+	
+	test('Empty tasks', function (done)
+	{
+		athena.parallel([], function (hlog) { done(hlog.failed ? hlog : null); });
+	});
 });
