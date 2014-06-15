@@ -15,6 +15,10 @@ Odyssey is an asynchronous logging system for node.js in development.
     * [Including](#athena-including)
     * [Context](#athena-context)
     * [Control Flows](#athena-controlflows)
+        * [map](#athena-map)
+        * [mapSeries](#athena-map-series)
+        * [parallel](#athena-parallel)
+        * [waterfall](#athena-waterfall)
 
 <a name="why-another"></a>
 ## Why another node.js logging system?
@@ -316,6 +320,7 @@ Calling `this.log( hlog )` is equivalent to `this.logChain = httpLog.chain(this.
 ### Control Flows
 
 * [map](#athena-map)
+* [mapSeries](#athena-map-series)
 * [parallel](#athena-parallel)
 * [waterfall](#athena-waterfall)
 
@@ -336,8 +341,17 @@ athena.map ( [hlog], items, iterator, resultsHandler );
 The `iterator` will be called once for every item in `items`. When all iterators have completed (invoked their callback) the `resultsHandler` will be invoked. Although the iterators may complete in a different order than the original `items` array, the `results` is guaranteed to be in the original order.
 
 See examples in the [map tests file](https://github.com/bretcope/odyssey/blob/master/test/map.mocha.js).
- 
-> There is not currently a map implementation which waits for each iterator to complete before invoking the next, such as [mapSeries](https://github.com/caolan/async#mapSeries). This may be implemented in the future.
+
+<a name="athena-map-series"></a>
+#### Map Series
+
+Similar to [async.map](https://github.com/caolan/async#mapSeries).
+
+```javascript
+athena.mapSeries ( [hlog], items, iterator, resultsHandler );
+```
+
+Exactly the same as [athena.map](#athena-map) except it waits for the iterator to complete before calling it again with the next item. If an iterator passes an error to its callback, then any remaining items are skipped and the `resultsHandler` is immediately called.
 
 <a name="athena-parallel"></a>
 #### Parallel
