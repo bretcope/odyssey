@@ -12,7 +12,7 @@
     "test": "mocha"
   },
   "dependencies": {
-    "arguer": "~0.0.4"
+    "arguer": "^1.0.0"
   },
   "devDependencies": {
     "mocha": "~1.14.0"
