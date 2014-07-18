@@ -66,6 +66,17 @@ suite('HttpLog', function ()
 		var hlog = httpLog(404, err);
 		assert(hlog.status === 404);
 	});
+
+	test('Can construct with http.IncomingMessage (with statusCode)', function ()
+	{
+		var http = require('http');
+		var response = new http.IncomingMessage();
+		response.statusCode = 404;
+
+		var hlog = httpLog(response);
+		assert(hlog.status === 404, 'Invalid status');
+		assert(hlog.message === http.STATUS_CODES['404'], 'Invalid message');
+	});
 	
 	test('Null is not turned into an error when default status is provided', function ()
 	{

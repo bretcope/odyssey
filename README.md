@@ -69,12 +69,14 @@ console.log(httpLog() instanceof Error);   // outputs "true"
 httpLog ( )
 httpLog ( [code], err, [data] )
 httpLog ( [code], [message], [data] )
+httpLog ( response )
 ```
 
 * `code` The number to assigned to [status](#httplog-properties-status).
 * `err` Error object to be converted to an HttpLog.
 * `message` A string which will be assigned to [message](#httplog-properties-message).
 * `data` An object of arbitrary data which will be assigned to [message](#httplog-properties-data).
+* `response` An instance of [http.IncomingMessage](http://nodejs.org/api/http.html#http_http_incomingmessage) received from `http.ClientRequest`
 
 <a name="httplog-constructor-converting"></a>
 ##### Converting an Existing Error to HttpLog
@@ -110,6 +112,16 @@ httpLog({ my: 'data' });
 httpLog(400, 'This is a message');
 httpLog(400, { my: 'data' });
 httpLog(400, 'This is a message', { my: 'data' });
+```
+
+Using a `http.IncomingMessage`:
+
+```javascript
+request.on('response', function (response)
+{
+  var hlog = httpLog(response);
+  // ...
+});
 ```
 
 <a name="httplog-constructor-shortcuts"></a>
